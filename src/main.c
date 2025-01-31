@@ -3,13 +3,13 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define DELAY 100000
+#define DELAY 70000
 #define JUMP_STRENGTH -3
 #define GRAVITY 1
-#define PIPE_GAP 10 //6
+#define PIPE_GAP 6
 #define PIPE_WIDTH 3
 #define PIPE_SPACING 20
-#define ITEM_COUNT 3
+#define ITEM_SPACING 25
 #define STAR_DURATION 100
 
 struct Bird {
@@ -29,7 +29,7 @@ struct Item {
 
 struct Bird bird;
 struct Pipe *pipes;
-struct Item items[ITEM_COUNT];
+struct Item *items;
 
 int score = 0;
 int coin_score = 0;
@@ -37,6 +37,7 @@ int game_over = 0;
 int star_mode = 0;
 int star_timer = 0;
 int pipe_count;
+int item_count;
 
 void init_game() {
     initscr();
@@ -47,6 +48,9 @@ void init_game() {
     pipe_count = COLS / PIPE_SPACING;
     pipes = malloc(sizeof(struct Pipe) * pipe_count);
 
+    item_count = COLS / ITEM_SPACING;
+    items = malloc(sizeof(struct Item) * item_count);
+
     bird.y = LINES / 2;
     bird.x = COLS / 4;
     bird.velocity = 0;
@@ -56,7 +60,7 @@ void init_game() {
         pipes[i].hole_y = rand() % (LINES - PIPE_GAP - 2) + 1;
     }
 
-    for (int i = 0; i < ITEM_COUNT; i++) {
+    for (int i = 0; i < item_count; i++) {
         int pipe_index = i % pipe_count;
         items[i].x = pipes[pipe_index].x + PIPE_WIDTH + 2;
         items[i].y = pipes[pipe_index].hole_y + PIPE_GAP / 2;
@@ -81,7 +85,7 @@ void draw_pipes() {
 }
 
 void draw_items() {
-    for (int i = 0; i < ITEM_COUNT; i++) {
+    for (int i = 0; i < item_count; i++) {
         if (items[i].x > 0) {
             mvprintw(items[i].y, items[i].x, "%c", items[i].type);
         }
@@ -117,24 +121,30 @@ void update_game() {
             }
         }
 
-        for (int i = 0; i < ITEM_COUNT; i++) {
+        for (int i = 0; i < item_count; i++) {
             items[i].x -= (star_mode ? 2 : 1);
 
             if (items[i].x <= 0) {
                 int pipe_index = rand() % pipe_count;
                 items[i].x = pipes[pipe_index].x + PIPE_WIDTH + 2;
                 items[i].y = pipes[pipe_index].hole_y + PIPE_GAP / 2;
-                items[i].type = (rand() % 5 == 0) ? '*' : '0';
+
+                if (star_mode) {
+                    items[i].type = '0';
+                } else {
+                    items[i].type = (rand() % 5 == 0) ? '*' : '0';
+                }
             }
 
             if (abs(bird.x - items[i].x) <= 1 && bird.y == items[i].y) {
                 if (items[i].type == '0') {
                     coin_score++;
-                } else if (items[i].type == '*') {
+                    items[i].x = -1;
+                } else if (items[i].type == '*' && !star_mode) {
                     star_mode = 1;
                     star_timer = STAR_DURATION;
+                    items[i].x = -1;
                 }
-                items[i].x = -1;
             }
         }
 
@@ -153,12 +163,26 @@ void draw_game() {
     draw_pipes();
     draw_items();
     mvprintw(0, 0, "Score: %d | Coins: %d | %s", score, coin_score, star_mode ? "STAR MODE!" : "");
-    if (game_over) mvprintw(LINES / 2, COLS / 2 - 5, "GAME OVER! Press 'q' to exit.");
     refresh();
+}
+
+void draw_game_over_screen() {
+    clear();
+    mvprintw(LINES / 2 - 2, COLS / 2 - 5, "GAME OVER!");
+    mvprintw(LINES / 2, COLS / 2 - 10, "Final Score: %d", score);
+    mvprintw(LINES / 2 + 1, COLS / 2 - 10, "Coins Collected: %d", coin_score);
+    mvprintw(LINES / 2 + 3, COLS / 2 - 15, "Press 'q' to exit.");
+    refresh();
+
+    int ch;
+    while ((ch = getch()) != 'q') {
+        usleep(DELAY);
+    }
 }
 
 void cleanup_game() {
     free(pipes);
+    free(items);
     endwin();
 }
 
@@ -172,6 +196,7 @@ int main() {
         usleep(DELAY);
     }
 
+    draw_game_over_screen();
     cleanup_game();
     return 0;
 }
