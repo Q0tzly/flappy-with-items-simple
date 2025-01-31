@@ -47,9 +47,20 @@ void init_game() {
 
     pipe_count = COLS / PIPE_SPACING;
     pipes = malloc(sizeof(struct Pipe) * pipe_count);
+    if (!pipes) {
+        endwin();
+        fprintf(stderr, "Failed to allocate memory for pipes\n");
+        exit(1);
+    }
 
     item_count = COLS / ITEM_SPACING;
     items = malloc(sizeof(struct Item) * item_count);
+    if (!items) {
+        free(pipes);
+        endwin();
+        fprintf(stderr, "Failed to allocate memory for items\n");
+        exit(1);
+    }
 
     bird.y = LINES / 2;
     bird.x = COLS / 4;
@@ -86,7 +97,7 @@ void draw_pipes() {
 
 void draw_items() {
     for (int i = 0; i < item_count; i++) {
-        if (items[i].x > 0) {
+        if (items[i].x > 0 && items[i].x < COLS) {
             mvprintw(items[i].y, items[i].x, "%c", items[i].type);
         }
     }
@@ -101,13 +112,15 @@ void update_game() {
         bird.y += bird.velocity;
         bird.velocity += GRAVITY;
 
-        if (bird.y <= 0 || bird.y >= LINES - 1) game_over = 1;
+
+        if (bird.y < 0) bird.y = 0;
+        if (bird.y >= LINES - 1) game_over = 1;
 
         for (int i = 0; i < pipe_count; i++) {
             pipes[i].x -= (star_mode ? 2 : 1);
 
-            if (pipes[i].x <= 0) {
-                pipes[i].x = COLS - 1;
+            if (pipes[i].x + PIPE_WIDTH < 0) {
+                pipes[i].x = COLS;
                 pipes[i].hole_y = rand() % (LINES - PIPE_GAP - 2) + 1;
                 score++;
             }
@@ -214,7 +227,7 @@ void draw_game_over_screen() {
             restart_game();
             return;
         }
-        usleep(DELAY);
+        usleep(100000);
     }
 }
 
@@ -230,7 +243,7 @@ void draw_help_screen() {
         if (ch == '\n' || ch == 'h' || ch == 'q') {
             return;
         }
-        usleep(DELAY);
+        usleep(100000);
     }
 }
 
@@ -246,6 +259,7 @@ void draw_ascii_title() {
 
 void draw_title_screen() {
     clear();
+    game_over = 0;
     draw_ascii_title();
     mvprintw(LINES / 2 + 2, COLS / 2 - 12, "Press Enter to  Start");
     mvprintw(LINES / 2 + 3, COLS / 2 - 12, "Press 'h'   for Help");
