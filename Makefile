@@ -1,5 +1,5 @@
 NAME = flappy-with-items
-VERSION = 1.5.0
+VERSION = 1.5.1
 
 CC = cc
 CFLAGS = -Wall -g
