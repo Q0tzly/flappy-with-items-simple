@@ -162,7 +162,7 @@ void draw_game() {
     draw_bird();
     draw_pipes();
     draw_items();
-    
+
     if (star_mode) {
         if (star_timer <= 20) {
             mvprintw(1, 0, "⚠ STAR ENDING! %d", star_timer);
@@ -175,16 +175,77 @@ void draw_game() {
     refresh();
 }
 
+void restart_game() {
+    game_over = 0;
+    score = 0;
+    coin_score = 0;
+    star_mode = 0;
+    star_timer = 0;
+
+    bird.y = LINES / 2;
+    bird.x = COLS / 4;
+    bird.velocity = 0;
+
+    for (int i = 0; i < pipe_count; i++) {
+        pipes[i].x = COLS + i * PIPE_SPACING;
+        pipes[i].hole_y = rand() % (LINES - PIPE_GAP - 2) + 1;
+    }
+
+    for (int i = 0; i < item_count; i++) {
+        int pipe_index = i % pipe_count;
+        items[i].x = pipes[pipe_index].x + PIPE_WIDTH + 2;
+        items[i].y = pipes[pipe_index].hole_y + PIPE_GAP / 2;
+        items[i].type = (rand() % 5 == 0) ? '*' : '0';
+    }
+}
+
 void draw_game_over_screen() {
     clear();
-    mvprintw(LINES / 2 - 2, COLS / 2 - 5, "GAME OVER!");
-    mvprintw(LINES / 2, COLS / 2 - 10, "Final Score: %d", score);
-    mvprintw(LINES / 2 + 1, COLS / 2 - 10, "Coins Collected: %d", coin_score);
-    mvprintw(LINES / 2 + 3, COLS / 2 - 15, "Press 'q' to exit.");
+    mvprintw(LINES / 2 - 3, COLS / 2 - 5, "GAME OVER");
+    mvprintw(LINES / 2, COLS / 2 - 10, "Final Score     : %d", score);
+    mvprintw(LINES / 2 + 1, COLS / 2 - 10, "Coins Collected : %d", coin_score);
+    mvprintw(LINES / 2 + 3, COLS / 2 - 15, "Press 'Enter' or 'q' to Title");
     refresh();
 
     int ch;
-    while ((ch = getch()) != 'q') {
+    while (1) {
+        ch = getch();
+        if (ch == '\n' || ch == 'q') {
+            restart_game();
+            return;
+        }
+        usleep(DELAY);
+    }
+}
+
+void draw_ascii_title() {
+    mvprintw(LINES / 2 - 9, (COLS - 40) / 2, "  ______ _                              ");
+    mvprintw(LINES / 2 - 8, (COLS - 40) / 2, " /  ____| |         ___    ___   __  __ ");
+    mvprintw(LINES / 2 - 7, (COLS - 40) / 2, " | |__  | |  __ _ ,/ _  \\,/ _  \\|  \\|  |");
+    mvprintw(LINES / 2 - 6, (COLS - 40) / 2, " |  __| | | / _` || |_| /| |_| / \\_,  |`");
+    mvprintw(LINES / 2 - 5, (COLS - 40) / 2, " | |    | || (_| || ,__/ | ,__/  _/  /  ");
+    mvprintw(LINES / 2 - 4, (COLS - 40) / 2, " |_|    |_| \\__,_||_|    |_|    |___/   ");
+    mvprintw(LINES / 2 - 2, (COLS - 12) / 2, "WITH ITEMS");
+}
+
+void draw_title_screen() {
+    clear();
+    draw_ascii_title();
+    mvprintw(LINES / 2 + 2, COLS / 2 - 11, "Press Enter to Start");
+    mvprintw(LINES / 2 + 3, COLS / 2 - 11, "Press 'q'   to Quit");
+    refresh();
+
+    int ch;
+    while (1) {
+        ch = getch();
+        if (ch == '\n') {
+            restart_game();
+            return;
+        }
+        if (ch == 'q') {
+            game_over = 1;
+            return;
+        }
         usleep(DELAY);
     }
 }
@@ -197,15 +258,27 @@ void cleanup_game() {
 
 int main() {
     srand(time(0));
+
     init_game();
 
-    while (!game_over) {
-        update_game();
-        draw_game();
-        usleep(DELAY);
+    while (1) {
+        draw_title_screen();
+        if (game_over) {
+            break;
+        }
+        
+        while (!game_over) {
+            update_game();
+            draw_game();
+            usleep(DELAY);
+        }
+        
+        draw_game_over_screen();
+        if (game_over) {
+            continue;
+        }
     }
 
-    draw_game_over_screen();
     cleanup_game();
     return 0;
 }
