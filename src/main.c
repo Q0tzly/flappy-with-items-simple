@@ -6,12 +6,11 @@
 #define DELAY 100000
 #define JUMP_STRENGTH -3
 #define GRAVITY 1
-#define PIPE_GAP 6
+#define PIPE_GAP 10 //6
 #define PIPE_WIDTH 3
-#define PIPE_COUNT 3
 #define PIPE_SPACING 20
 #define ITEM_COUNT 3
-#define STAR_DURATION 20
+#define STAR_DURATION 100
 
 struct Bird {
     int y, x;
@@ -29,7 +28,7 @@ struct Item {
 };
 
 struct Bird bird;
-struct Pipe pipes[PIPE_COUNT];
+struct Pipe *pipes;
 struct Item items[ITEM_COUNT];
 
 int score = 0;
@@ -37,6 +36,7 @@ int coin_score = 0;
 int game_over = 0;
 int star_mode = 0;
 int star_timer = 0;
+int pipe_count;
 
 void init_game() {
     initscr();
@@ -44,17 +44,20 @@ void init_game() {
     curs_set(FALSE);
     timeout(0);
 
+    pipe_count = COLS / PIPE_SPACING;
+    pipes = malloc(sizeof(struct Pipe) * pipe_count);
+
     bird.y = LINES / 2;
     bird.x = COLS / 4;
     bird.velocity = 0;
 
-    for (int i = 0; i < PIPE_COUNT; i++) {
+    for (int i = 0; i < pipe_count; i++) {
         pipes[i].x = COLS + i * PIPE_SPACING;
         pipes[i].hole_y = rand() % (LINES - PIPE_GAP - 2) + 1;
     }
 
     for (int i = 0; i < ITEM_COUNT; i++) {
-        int pipe_index = i % PIPE_COUNT;
+        int pipe_index = i % pipe_count;
         items[i].x = pipes[pipe_index].x + PIPE_WIDTH + 2;
         items[i].y = pipes[pipe_index].hole_y + PIPE_GAP / 2;
         items[i].type = (rand() % 5 == 0) ? '*' : '0';
@@ -66,7 +69,7 @@ void draw_bird() {
 }
 
 void draw_pipes() {
-    for (int i = 0; i < PIPE_COUNT; i++) {
+    for (int i = 0; i < pipe_count; i++) {
         for (int y = 0; y < LINES; y++) {
             if (y < pipes[i].hole_y || y > pipes[i].hole_y + PIPE_GAP) {
                 for (int w = 0; w < PIPE_WIDTH; w++) {
@@ -96,7 +99,7 @@ void update_game() {
 
         if (bird.y <= 0 || bird.y >= LINES - 1) game_over = 1;
 
-        for (int i = 0; i < PIPE_COUNT; i++) {
+        for (int i = 0; i < pipe_count; i++) {
             pipes[i].x -= (star_mode ? 2 : 1);
 
             if (pipes[i].x <= 0) {
@@ -118,13 +121,13 @@ void update_game() {
             items[i].x -= (star_mode ? 2 : 1);
 
             if (items[i].x <= 0) {
-                int pipe_index = rand() % PIPE_COUNT;
+                int pipe_index = rand() % pipe_count;
                 items[i].x = pipes[pipe_index].x + PIPE_WIDTH + 2;
                 items[i].y = pipes[pipe_index].hole_y + PIPE_GAP / 2;
                 items[i].type = (rand() % 5 == 0) ? '*' : '0';
             }
 
-            if (abs(bird.x - items[i].x) <= 1 && (bird.y - items[i].y >= 2 || items[i].y - bird.y >= 2)) {
+            if (abs(bird.x - items[i].x) <= 1 && bird.y == items[i].y) {
                 if (items[i].type == '0') {
                     coin_score++;
                 } else if (items[i].type == '*') {
@@ -155,6 +158,7 @@ void draw_game() {
 }
 
 void cleanup_game() {
+    free(pipes);
     endwin();
 }
 
