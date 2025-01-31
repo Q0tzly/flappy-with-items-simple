@@ -162,7 +162,16 @@ void draw_game() {
     draw_bird();
     draw_pipes();
     draw_items();
-    mvprintw(0, 0, "Score: %d | Coins: %d | %s", score, coin_score, star_mode ? "STAR MODE!" : "");
+    
+    if (star_mode) {
+        if (star_timer <= 20) {
+            mvprintw(1, 0, "⚠ STAR ENDING! %d", star_timer);
+        } else {
+            mvprintw(1, 0, "STAR TIME: %d", star_timer);
+        }
+    }
+
+    mvprintw(0, 0, "Score: %d | Coins: %d", score, coin_score);
     refresh();
 }
 
