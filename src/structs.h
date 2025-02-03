@@ -16,8 +16,8 @@ struct Item {
     char type;
 };
 
-struct Bird bird;
-struct Pipe *pipes;
-struct Item *items;
+extern struct Bird bird;
+extern struct Pipe *pipes;
+extern struct Item *items;
 
 #endif

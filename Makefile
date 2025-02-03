@@ -20,7 +20,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS)  -o $@ $^ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)

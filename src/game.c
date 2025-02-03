@@ -5,6 +5,10 @@
 #include "config.h"
 #include "structs.h"
 
+struct Bird bird;
+struct Pipe *pipes;
+struct Item *items;
+
 int score = 0;
 int coin_score = 0;
 int game_over = 0;
