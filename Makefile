@@ -1,5 +1,5 @@
 NAME = flappy-with-items
-VERSION = 2.0.1
+VERSION = 2.0.2
 
 CC = cc
 CFLAGS = -Wall -g
@@ -20,7 +20,7 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS)  -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)
@@ -28,7 +28,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 run: $(TARGET)
 	@echo "Running $(TARGET)..."
-	@./$(TARGET)
+	@exec ./$(TARGET)
 
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
